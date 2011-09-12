@@ -12,15 +12,14 @@ class Abbrev < Plugin
   def before
     Kernel.class_eval do
       def abbrev(src, *args, &block)
+        env = {:only => @only||[], :except => @except||[]}
         target = args.first if args
         if block
-          Abbrev.abbreviations[src] = block
+          Abbrev.abbreviations[src] = env.merge(:cmd => block)
         elsif target.is_a? Proc
-          Abbrev.abbreviations[src] = target
+          Abbrev.abbreviations[src] = env.merge(:cmd => target)
         elsif target.is_a? String
-          Abbrev.abbreviations[src] =  Proc.new do |sequence|
-            send(target)
-          end  
+          Abbrev.abbreviations[src] = env.merge(:cmd => Proc.new { |sequence| send(target) } )
         end
       end
     end
@@ -32,8 +31,9 @@ class Abbrev < Plugin
       # Find exact match 
       Abbrev.abbreviations.each_pair do |key, value|
         if key.to_s == Abbrev.history
+          next unless for_application?(Application.current.name, value[:only], value[:except])
           send("<Delete>"*(key.to_s.size))
-          value.call(sequence)
+          value[:cmd].call(sequence)
           Abbrev.history = ''
           return false
         end
@@ -55,6 +55,17 @@ class Abbrev < Plugin
     return false
   end
 
+  def for_application?(application, only, except)
+    only.each do |regex|
+      return false if regex.match(application).nil?
+    end
+
+    except.each do |regex|
+      return false if regex.match(application)
+    end
+
+    return true
+  end
 
 end
 
