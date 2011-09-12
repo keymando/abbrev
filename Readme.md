@@ -15,7 +15,7 @@ Examples
   abbrev 'ssmilies' do
     send(':)')
     send(':)')
-    alert(':)')
+    send(':)')
   end
 
 ```
