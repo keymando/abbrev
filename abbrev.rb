@@ -31,7 +31,8 @@ class Abbrev < Plugin
       # Find exact match 
       Abbrev.abbreviations.each_pair do |key, value|
         if key.to_s == Abbrev.history
-          next unless for_application?(Application.current.name, value[:only], value[:except])
+          current_app = Accessibility::Gateway.get_active_application.title
+          next unless for_application?(current_app, value[:only], value[:except])
           send("<Delete>"*(key.to_s.size))
           value[:cmd].call(sequence)
           Abbrev.history = ''
