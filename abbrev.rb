@@ -1,6 +1,6 @@
 class Abbrev < Plugin
 
-  requires_version '1.0.3'
+  requires_version '1.3.3'
 
   @abbreviations = {}
   @history = ''
@@ -26,21 +26,23 @@ class Abbrev < Plugin
   end
 
   def event_received(sequence)
- 
+
     unless /^\w$/i.match(sequence)
-      # Find exact match 
+      # Find exact match
       Abbrev.abbreviations.each_pair do |key, value|
         if key.to_s == Abbrev.history
           current_app = Accessibility::Gateway.get_active_application.title
           next unless for_application?(current_app, value[:only], value[:except])
-          send("<Delete>"*(key.to_s.size))
+          send("<Delete>"*(key.to_s.size+1))
           value[:cmd].call(sequence)
+          send(sequence)
           Abbrev.history = ''
-          return false
+          return true
         end
       end
-        Abbrev.history = ''
-        return false
+
+      Abbrev.history = ''
+      return false
     end
 
     Abbrev.history += sequence
